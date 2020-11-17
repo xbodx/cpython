@@ -80,6 +80,16 @@ def get_msvcr():
         elif msc_ver == '1600':
             # VS2010 / MSVC 10.0
             return ['msvcr100']
+        elif msc_ver == '1700':
+            # Visual Studio 2012 / Visual C++ 11.0
+            return ['msvcr110']
+        elif msc_ver == '1800':
+            # Visual Studio 2013 / Visual C++ 12.0
+            return ['msvcr120']
+        elif msc_ver == '1900':
+            # Visual Studio 2015 / Visual C++ 14.0
+            # "msvcr140.dll no longer exists" http://blogs.msdn.com/b/vcblog/archive/2014/06/03/visual-studio-14-ctp.aspx
+            return ['vcruntime140']             
         else:
             raise ValueError("Unknown MS Compiler version %s " % msc_ver)
 
@@ -111,6 +121,13 @@ class CygwinCCompiler(UnixCCompiler):
 
         self.gcc_version, self.ld_version, self.dllwrap_version = \
             get_versions()
+        
+        print("===============================")
+        print(f"gcc_version {self.gcc_version}")
+        print(f"ld_version {self.ld_version}")
+        print(f"dllwrap_version {self.dllwrap_version}")
+        print("===============================")
+
         self.debug_print(self.compiler_type + ": gcc %s, ld %s, dllwrap %s\n" %
                          (self.gcc_version,
                           self.ld_version,
@@ -294,8 +311,7 @@ class Mingw32CCompiler(CygwinCCompiler):
             entry_point = ''
 
         if is_cygwingcc():
-            raise CCompilerError(
-                'Cygwin gcc cannot be used with --compiler=mingw32')
+            print('WARN: Cygwin gcc cannot be used with --compiler=mingw32')
 
         self.set_executables(compiler='gcc -O -Wall',
                              compiler_so='gcc -mdll -O -Wall',
@@ -394,10 +410,13 @@ def get_versions():
 
     If not possible it returns None for it.
     """
-    commands = ['gcc -dumpversion', 'ld -v', 'dllwrap --version']
+    commands = ['gcc --version', 'ld -v', 'dllwrap --version']
     return tuple([_find_exe_version(cmd) for cmd in commands])
 
 def is_cygwingcc():
     '''Try to determine if the gcc that would be used is from cygwin.'''
     out_string = check_output(['gcc', '-dumpmachine'])
+    print(f"gcc -dumpmachine")
+    print(f"> {out_string}")
+    print("===============================")
     return out_string.strip().endswith(b'cygwin')
